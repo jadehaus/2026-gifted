@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Classroom Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-card brand-card">
+          <p class="eyebrow">API Practice</p>
+          <h1>My Classroom Chatbot</h1>
+          <p class="sidebar-copy">
+            OpenAI API를 연결해 나만의 챗봇을 완성하는 실습용 웹앱입니다.
+          </p>
+        </div>
+
+        <div class="sidebar-card">
+          <p class="section-title">추천 프롬프트</p>
+          <button class="prompt-chip" data-prompt="파이썬 for문을 중학생 눈높이로 설명해줘.">
+            파이썬 for문 설명
+          </button>
+          <button class="prompt-chip" data-prompt="오늘 수업의 핵심 내용을 5줄로 정리해줘.">
+            오늘 수업 5줄 요약
+          </button>
+          <button class="prompt-chip" data-prompt="내가 만든 챗봇에 어울리는 이름 5개를 제안해줘.">
+            챗봇 이름 추천
+          </button>
+        </div>
+
+        <div class="sidebar-card">
+          <p class="section-title">체크리스트</p>
+          <ul class="checklist">
+            <li>`SYSTEM_PROMPT` 채우기</li>
+            <li>`TEMPERATURE` 정하기</li>
+            <li>`generate_bot_reply()` 구현하기</li>
+            <li>대화 스타일 직접 바꿔 보기</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <p class="eyebrow">Web Chatbot Lab</p>
+            <h2>대화형 챗봇 실습</h2>
+          </div>
+          <button id="resetButton" class="ghost-button">대화 초기화</button>
+        </header>
+
+        <section id="chatMessages" class="chat-messages"></section>
+
+        <form id="chatForm" class="composer">
+          <label class="composer-label" for="userInput">메시지 입력</label>
+          <textarea
+            id="userInput"
+            name="userInput"
+            rows="1"
+            placeholder="메시지를 입력하세요. Enter 전송, Shift+Enter 줄바꿈"
+          ></textarea>
+          <div class="composer-actions">
+            <p class="composer-tip">백엔드가 아직 비어 있으면 챗봇이 구현할 곳을 알려줍니다.</p>
+            <button id="sendButton" type="submit" class="send-button">보내기</button>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
