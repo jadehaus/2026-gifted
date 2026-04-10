@@ -1,0 +1,157 @@
+# =========================
+# OS / Editor junk
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+*.env
+*.local
+secrets/
+*.pem
+*.key
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging / build
+build/
+dist/
+site/
+.eggs/
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+
+# Testing / coverage / type checking
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python tool lockfiles (keep if you want reproducibility)
+# Uncomment the ones you do NOT want to track
+#Pipfile.lock
+#poetry.lock
+
+# =========================
+# Node / frontend
+# =========================
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.parcel-cache/
+.next/
+.nuxt/
+.svelte-kit/
+coverage/
+
+# Frontend build outputs
+dist/
+build/
+
+# =========================
+# Static site generators
+# Uncomment what applies
+# =========================
+
+# Jekyll
+_site/
+.jekyll-cache/
+.jekyll-metadata
+
+# Hugo
+public/
+resources/_gen/
+
+# MkDocs
+site/
+
+# Docusaurus
+.docusaurus/
+
+# =========================
+# Generated assets / temp
+# =========================
+tmp/
+temp/
+.cache/
+*.tmp
+
+# Large local data / artifacts
+data/
+artifacts/
+outputs/
+checkpoints/
+models/
+*.sqlite3
+
+# Ignore common binary blobs
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.onnx
+*.h5
+*.npy
+*.npz
+*.parquet
+
+# =========================
+# Images or media generated locally
+# Remove these if your site needs tracked assets here
+# =========================
+# generated_media/
+# screenshots/
+# renders/
+
+# =========================
+# Deployment / misc
+# =========================
+.vercel/
+.netlify/
+
+# macOS archive files
+*.zip
+*.tar
+*.gz
