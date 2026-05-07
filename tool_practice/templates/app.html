@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tool LLM Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    {% include "page_text.html" %}
+
+    <main class="app-shell">
+      <section class="chat-panel">
+        <header class="hero">
+          <div>
+            <p class="eyebrow">OpenAI Tool Practice</p>
+            <h1 data-text="title">나만의 Tool LLM 실험실</h1>
+            <p data-text="subtitle">Python 함수가 LLM의 tool이 되는 순간을 직접 관찰해 보세요.</p>
+          </div>
+          <div class="status-pill">
+            <span class="pulse"></span>
+            Live
+          </div>
+        </header>
+
+        <div id="messages" class="messages"></div>
+
+        <form id="chat-form" class="composer">
+          <input id="user-input" autocomplete="off" />
+          <button id="send-button" type="submit">보내기</button>
+        </form>
+      </section>
+
+      <aside class="tool-panel">
+        <div class="tool-file-box">
+          <label for="tool-file-select">Tool 파일 선택</label>
+          <div class="tool-file-row">
+            <select id="tool-file-select">
+              <option value="">tool 없음</option>
+            </select>
+            <button id="tool-file-button" class="ghost-button" type="button">적용</button>
+            <button id="tool-remove-button" class="danger-button" type="button">제거</button>
+          </div>
+        </div>
+
+        <div class="panel-header">
+          <h2 data-text="toolTitle">LLM에게 전달되는 Tool Schema</h2>
+          <div class="panel-actions">
+            <span id="tool-count">0 tools</span>
+            <button id="schema-toggle" class="ghost-button" type="button">접기</button>
+          </div>
+        </div>
+        <div id="schema-box" class="schema-box">
+          <pre id="tool-schema">{}</pre>
+        </div>
+
+        <div class="panel-header lower">
+          <h2 data-text="callTitle">이번 대화에서 실행된 Tool</h2>
+        </div>
+        <div id="tool-calls" class="tool-calls"></div>
+      </aside>
+    </main>
+
+    <div id="confirm-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <h2>Tool 파일을 바꿀까요?</h2>
+        <p>대화가 초기화됩니다. 계속하시겠습니까?</p>
+        <div class="modal-actions">
+          <button id="modal-cancel" class="ghost-button" type="button">취소</button>
+          <button id="modal-confirm" type="button">계속</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
