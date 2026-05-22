@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="starfield" aria-hidden="true"></div>
+    <main class="game-shell">
+      <section class="left-panel">
+        <header class="brand">
+          <div class="archive-mark" aria-hidden="true">月</div>
+          <p>Moonlit Archive</p>
+          <h1>{{ title }}</h1>
+          <div id="api-status" class="status">연결 확인 중</div>
+        </header>
+
+        <section class="panel-block objective-block">
+          <div class="panel-title">현재 목표</div>
+          <p id="objective" class="objective">-</p>
+        </section>
+
+        <section class="panel-block vitals">
+          <div class="panel-title">방문자 상태</div>
+          <div class="hp-row">
+            <span class="hp-label">체력</span>
+            <div class="hp-bar"><div id="hp-fill" class="hp-fill"></div></div>
+            <strong id="hp">-</strong>
+          </div>
+          <div class="stat-grid">
+            <div>
+              <span>레벨</span>
+              <strong id="level">-</strong>
+            </div>
+            <div>
+              <span>경험치</span>
+              <strong id="xp">-</strong>
+            </div>
+            <div>
+              <span>턴</span>
+              <strong id="turn">-</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-block">
+          <div class="panel-title">현재 위치</div>
+          <h2 id="room-name">-</h2>
+          <p id="room-desc">-</p>
+          <div id="exits" class="chips"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="panel-title">이 방의 인물</div>
+          <div id="present" class="present-list"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="panel-title">인벤토리</div>
+          <div id="inventory" class="chips"></div>
+        </section>
+
+        <section class="panel-block">
+          <div class="panel-title">호감도</div>
+          <div id="affection" class="affection-list"></div>
+        </section>
+      </section>
+
+      <section class="chat-panel">
+        <header class="chat-header">
+          <div>
+            <p>기록관 채팅 콘솔</p>
+            <h2>말하면 세계가 움직입니다</h2>
+          </div>
+          <span class="gm-badge">LLM 게임 마스터</span>
+        </header>
+        <div id="messages" class="messages"></div>
+        <form id="chat-form" class="composer">
+          <div class="quick-actions" id="quick-actions"></div>
+          <div class="composer-row">
+            <input
+              id="user-input"
+              autocomplete="off"
+              placeholder="예: 시아에게 동생의 이름을 물어본다 / 북쪽으로 간다 / 성냥갑을 줍는다"
+            />
+            <button id="send-button" type="submit">전송</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="right-panel">
+        <section class="panel-block">
+          <div class="panel-title">진행 기록</div>
+          <ol id="journal" class="journal"></ol>
+        </section>
+
+        <section class="panel-block battle-box">
+          <div class="panel-title">전투</div>
+          <div id="battle">현재 전투 없음</div>
+        </section>
+
+        <section class="panel-block">
+          <div class="tools-header">
+            <div class="panel-title">도구 호출 로그</div>
+            <button id="reset-button" type="button">새 게임</button>
+          </div>
+          <div id="tool-calls" class="tool-calls"></div>
+        </section>
+
+        <details class="schema-details">
+          <summary>전달된 Tool Schema</summary>
+          <pre id="tool-schema"></pre>
+        </details>
+      </aside>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

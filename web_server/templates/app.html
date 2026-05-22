@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Web Browser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">LLM</span>
+        <span>Web Browser</span>
+      </div>
+      <div class="top-actions">
+        <div class="tool-menu" id="tool-menu">
+          <button class="icon-button tool-trigger" id="tool-trigger" type="button" aria-label="Tool 선택">
+            <span id="tool-label">Tool 없음</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+          <section class="tool-popover hidden" id="tool-popover" aria-label="Tool 선택 메뉴">
+            <label>Tool file</label>
+            <div class="fixed-tool">my_tools.py</div>
+            <div class="tool-meta">
+              <span id="tool-count">0 tools</span>
+              <span id="api-status">확인 중</span>
+            </div>
+            <details>
+              <summary>Schema 보기</summary>
+              <pre id="tool-schema">[]</pre>
+            </details>
+          </section>
+        </div>
+        <button class="icon-button" id="refresh-button" type="button" aria-label="대화 초기화">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+            <path d="M20 4v6h-6" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="chat-shell">
+      <section id="messages" class="messages" aria-live="polite">
+        <article class="message assistant greeting">
+          <div class="avatar">AI</div>
+          <div class="message-body markdown">
+            <h1>무엇을 도와드릴까요?</h1>
+            <p>my_tools.py의 tool 사용 기록과 답변을 이 대화 안에 순서대로 보여드릴게요.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <form id="chat-form" class="composer-wrap">
+      <div class="composer">
+        <textarea
+          id="user-input"
+          rows="1"
+          autocomplete="off"
+          placeholder="메시지를 입력하세요"
+        ></textarea>
+        <button id="send-button" class="send-button" type="submit" aria-label="보내기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+        </button>
+      </div>
+    </form>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

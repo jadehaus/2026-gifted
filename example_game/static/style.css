@@ -1,0 +1,839 @@
+:root {
+  color-scheme: dark;
+  --bg: #07080d;
+  --panel: rgba(20, 18, 27, 0.9);
+  --panel-soft: rgba(34, 31, 45, 0.82);
+  --panel-deep: rgba(9, 10, 16, 0.92);
+  --text: #f4efe6;
+  --muted: #aa9f92;
+  --line: rgba(244, 221, 175, 0.16);
+  --gold: #e7bc68;
+  --moon: #d8f3ff;
+  --violet: #8f7aff;
+  --red: #ff6b72;
+  --green: #76e0b7;
+  --ink: #05060a;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% -12%, rgba(216, 243, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(143, 122, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 92% 88%, rgba(231, 188, 104, 0.12), transparent 32%),
+    linear-gradient(180deg, #0a0c14 0%, #15111a 54%, #06070b 100%);
+  font-family: "Noto Sans KR", Pretendard, Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* 별가루 배경 — 게임 분위기 */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 28% 64%, rgba(216, 243, 255, 0.6), transparent),
+    radial-gradient(1.4px 1.4px at 47% 18%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 63% 76%, rgba(231, 188, 104, 0.6), transparent),
+    radial-gradient(1.2px 1.2px at 78% 34%, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1px 1px at 88% 58%, rgba(216, 243, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 38% 88%, rgba(255, 255, 255, 0.5), transparent);
+  background-size: 100% 100%;
+  animation: twinkle 6s ease-in-out infinite alternate;
+  opacity: 0.55;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.35; }
+  to { opacity: 0.7; }
+}
+
+.game-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 320px minmax(440px, 1fr) 340px;
+  gap: 16px;
+  width: min(1480px, calc(100vw - 32px));
+  min-height: calc(100vh - 28px);
+  margin: 14px auto;
+}
+
+.left-panel,
+.chat-panel,
+.right-panel {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 140px),
+    var(--panel);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.5),
+    inset 0 0 40px rgba(231, 188, 104, 0.04);
+  backdrop-filter: blur(6px);
+}
+
+.left-panel,
+.right-panel {
+  padding: 16px;
+  overflow: auto;
+}
+
+/* Brand */
+.brand {
+  position: relative;
+  min-height: 150px;
+  padding: 10px 0 18px 86px;
+  border-bottom: 1px solid var(--line);
+}
+
+.archive-mark {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 96px;
+  border: 1px solid rgba(231, 188, 104, 0.4);
+  border-radius: 12px;
+  color: var(--moon);
+  background:
+    linear-gradient(180deg, rgba(216, 243, 255, 0.16), rgba(143, 122, 255, 0.14)),
+    #10121c;
+  box-shadow: inset 0 0 24px rgba(216, 243, 255, 0.14), 0 0 26px rgba(143, 122, 255, 0.18);
+  font-family: "Gowun Batang", serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+}
+
+.brand p,
+.chat-header p,
+.panel-title {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-family: "Gowun Batang", serif;
+  font-size: 1.6rem;
+  line-height: 1.24;
+  color: #fbf3df;
+  text-shadow: 0 0 22px rgba(216, 243, 255, 0.22);
+}
+
+h2 {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.status {
+  width: fit-content;
+  margin-top: 14px;
+  padding: 6px 11px;
+  border: 1px solid rgba(118, 224, 183, 0.34);
+  border-radius: 999px;
+  color: var(--green);
+  background: rgba(118, 224, 183, 0.08);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.status.warn {
+  color: var(--red);
+  border-color: rgba(255, 107, 114, 0.38);
+  background: rgba(255, 107, 114, 0.08);
+}
+
+/* Panels */
+.panel-block {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(231, 188, 104, 0.06), transparent 46%),
+    var(--panel-soft);
+}
+
+.objective-block {
+  border-color: rgba(231, 188, 104, 0.34);
+  background:
+    linear-gradient(135deg, rgba(231, 188, 104, 0.14), transparent 60%),
+    var(--panel-soft);
+}
+
+.objective {
+  color: #fbe6c0;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+/* Vitals + HP bar */
+.hp-row {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hp-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.hp-bar {
+  height: 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(5, 6, 10, 0.6);
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #76e0b7, #4fd0c8);
+  box-shadow: 0 0 12px rgba(118, 224, 183, 0.5);
+  transition: width 0.5s ease;
+}
+
+.hp-fill.low {
+  background: linear-gradient(90deg, #ff6b72, #ff9d6b);
+  box-shadow: 0 0 12px rgba(255, 107, 114, 0.5);
+}
+
+.hp-row strong {
+  color: var(--moon);
+  font-size: 0.85rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat-grid div {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(5, 6, 10, 0.4);
+  text-align: center;
+}
+
+.stat-grid span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.stat-grid strong {
+  color: var(--moon);
+  font-size: 0.94rem;
+}
+
+#room-name {
+  font-family: "Gowun Batang", serif;
+  color: var(--moon);
+}
+
+#room-desc {
+  color: #c4b8aa;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.chip {
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid rgba(216, 243, 255, 0.24);
+  border-radius: 999px;
+  color: #edf9ff;
+  background: rgba(216, 243, 255, 0.08);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.chip.muted {
+  color: var(--muted);
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Present characters */
+.present-list {
+  display: grid;
+  gap: 8px;
+}
+
+.present-card {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 1px 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--char-accent, var(--moon));
+  border-radius: 10px;
+  background: rgba(5, 6, 10, 0.42);
+}
+
+.present-emoji {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--char-accent, #d8f3ff) 22%, transparent);
+  font-size: 1.2rem;
+}
+
+.present-name {
+  color: var(--char-accent, var(--moon));
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.present-role {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.affection-list {
+  display: grid;
+  gap: 8px;
+}
+
+.affection-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 24px;
+  align-items: center;
+  gap: 8px;
+  color: #c7bcaf;
+  font-size: 0.85rem;
+}
+
+meter {
+  width: 100%;
+  accent-color: var(--gold);
+}
+
+/* Chat */
+.chat-panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: calc(100vh - 28px);
+  overflow: hidden;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(216, 243, 255, 0.1), transparent 48%),
+    rgba(5, 6, 10, 0.45);
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-family: "Gowun Batang", serif;
+  color: var(--moon);
+}
+
+.gm-badge {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 1px solid rgba(231, 188, 104, 0.4);
+  border-radius: 999px;
+  color: var(--gold);
+  background: rgba(231, 188, 104, 0.1);
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(231, 188, 104, 0.12);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 20px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  background:
+    linear-gradient(180deg, rgba(5, 6, 10, 0.1), rgba(5, 6, 10, 0.4)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(231, 188, 104, 0.03) 32px);
+}
+
+.bubble {
+  width: fit-content;
+  max-width: min(78ch, 92%);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  line-height: 1.66;
+  white-space: normal;
+  animation: rise 0.32s ease both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bubble.user {
+  align-self: flex-end;
+  color: #1a1309;
+  background: linear-gradient(135deg, #f1c96e, #fff0bd);
+  border-color: rgba(255, 238, 184, 0.55);
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 12px 28px rgba(231, 188, 104, 0.18);
+}
+
+.bubble.assistant {
+  align-self: flex-start;
+  color: #efe8dd;
+  background:
+    linear-gradient(180deg, rgba(216, 243, 255, 0.07), transparent 130px),
+    rgba(17, 18, 27, 0.96);
+  border-color: rgba(216, 243, 255, 0.2);
+  border-bottom-left-radius: 4px;
+  box-shadow: inset 3px 0 0 rgba(216, 243, 255, 0.24);
+}
+
+.bubble.loading {
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-style: italic;
+}
+
+/* Character speech bubble — 캐릭터가 직접 말하는 것처럼 */
+.bubble.character {
+  align-self: flex-start;
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  max-width: min(72ch, 92%);
+  padding: 13px 16px 14px 13px;
+  border-color: color-mix(in srgb, var(--char-accent) 42%, var(--line));
+  border-left: 3px solid var(--char-accent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--char-accent) 12%, transparent), transparent 60%),
+    rgba(13, 14, 22, 0.96);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.char-avatar {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--char-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--char-accent) 20%, #0d0e16);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--char-accent) 35%, transparent);
+  font-size: 1.4rem;
+}
+
+.char-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.char-name {
+  color: var(--char-accent);
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.char-role {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.char-emotion {
+  padding: 1px 8px;
+  border: 1px solid color-mix(in srgb, var(--char-accent) 45%, transparent);
+  border-radius: 999px;
+  color: var(--char-accent);
+  background: color-mix(in srgb, var(--char-accent) 12%, transparent);
+  font-size: 0.7rem;
+}
+
+.char-line {
+  color: #f1ece2;
+  font-family: "Gowun Batang", serif;
+  font-size: 1rem;
+  line-height: 1.62;
+}
+
+.char-line::before { content: "“"; color: var(--char-accent); }
+.char-line::after { content: "”"; color: var(--char-accent); }
+
+/* Tool notice in chat — 교육용 도구 사용 표시 */
+.tool-notice {
+  align-self: center;
+  width: 100%;
+  max-width: 92%;
+  padding: 10px 12px;
+  border: 1px dashed rgba(118, 224, 183, 0.4);
+  border-radius: 12px;
+  background: rgba(118, 224, 183, 0.05);
+  animation: rise 0.3s ease both;
+}
+
+.tool-notice-head {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--green);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tool-notice-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tool-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid rgba(118, 224, 183, 0.32);
+  border-radius: 999px;
+  background: rgba(5, 6, 10, 0.5);
+  font-size: 0.76rem;
+}
+
+.tool-pill code {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.tool-pill .tl {
+  color: var(--muted);
+}
+
+.system-note {
+  align-self: center;
+  padding: 6px 12px;
+  border: 1px solid rgba(231, 188, 104, 0.34);
+  border-radius: 999px;
+  color: #fbe6c0;
+  background: rgba(231, 188, 104, 0.08);
+  font-size: 0.8rem;
+  animation: rise 0.3s ease both;
+}
+
+.bubble p + p,
+.bubble ul + p,
+.bubble p + ul,
+.bubble blockquote + p {
+  margin-top: 10px;
+}
+
+.bubble p,
+.bubble ul,
+.bubble blockquote,
+.bubble h3,
+.bubble h4,
+.bubble h5 {
+  margin: 0;
+}
+
+.bubble h3,
+.bubble h4,
+.bubble h5 {
+  margin-bottom: 8px;
+  font-family: "Gowun Batang", serif;
+  color: var(--moon);
+  font-size: 1.04rem;
+}
+
+.bubble strong {
+  color: var(--moon);
+}
+
+.bubble em {
+  color: #f8d889;
+  font-style: normal;
+}
+
+.bubble ul {
+  padding-left: 19px;
+}
+
+.bubble li + li {
+  margin-top: 4px;
+}
+
+.bubble blockquote {
+  padding: 9px 11px;
+  border-left: 3px solid var(--gold);
+  color: #f7ddb0;
+  background: rgba(231, 188, 104, 0.08);
+}
+
+.bubble code {
+  padding: 2px 5px;
+  border: 1px solid rgba(216, 243, 255, 0.2);
+  border-radius: 6px;
+  color: var(--moon);
+  background: rgba(216, 243, 255, 0.08);
+}
+
+/* Composer + quick actions */
+.composer {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px 16px;
+  border-top: 1px solid var(--line);
+  background: rgba(5, 6, 10, 0.9);
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.quick-btn {
+  height: auto;
+  padding: 6px 12px;
+  border: 1px solid rgba(216, 243, 255, 0.26);
+  border-radius: 999px;
+  color: #e7f5ff;
+  background: rgba(216, 243, 255, 0.06);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.quick-btn:hover {
+  background: rgba(216, 243, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.composer-row {
+  display: grid;
+  grid-template-columns: 1fr 84px;
+  gap: 10px;
+}
+
+input,
+button {
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font: inherit;
+}
+
+input {
+  min-width: 0;
+  padding: 0 14px;
+  color: var(--text);
+  background: #0e1018;
+  outline: none;
+}
+
+input::placeholder {
+  color: #776f68;
+}
+
+input:focus {
+  border-color: rgba(216, 243, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(216, 243, 255, 0.12);
+}
+
+#send-button {
+  padding: 0 14px;
+  color: #151009;
+  background: linear-gradient(180deg, #f5d47f, #d7a94b);
+  border-color: rgba(255, 238, 184, 0.44);
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+#send-button:hover {
+  filter: brightness(1.06);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* Right panel */
+.journal {
+  margin: 0;
+  padding-left: 20px;
+  color: #c7bcaf;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.journal li + li {
+  margin-top: 8px;
+}
+
+.battle-box #battle {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+}
+
+#battle.active {
+  color: var(--red);
+  font-weight: 700;
+  animation: battlePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes battlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.tools-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#reset-button {
+  height: 34px;
+  padding: 0 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+#reset-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tool-calls {
+  display: grid;
+  gap: 8px;
+}
+
+.empty,
+.tool-call {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(5, 6, 10, 0.48);
+  font-size: 0.8rem;
+}
+
+.tool-call strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--green);
+}
+
+.tool-call-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.schema-details {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.schema-details summary {
+  cursor: pointer;
+}
+
+#tool-schema {
+  margin-top: 10px;
+  max-height: 280px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: auto;
+  background: var(--ink);
+}
+
+@media (max-width: 1100px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-panel {
+    min-height: 64vh;
+  }
+}
+
+@media (max-width: 620px) {
+  .game-shell {
+    width: min(100vw - 16px, 100%);
+    margin: 8px auto;
+  }
+
+  .brand {
+    min-height: 0;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-row {
+    grid-template-columns: 1fr;
+  }
+}

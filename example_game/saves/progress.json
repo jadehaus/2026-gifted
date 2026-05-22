@@ -1,0 +1,47 @@
+{
+  "player": {
+    "name": "방문자",
+    "hp": 34,
+    "max_hp": 34,
+    "level": 1,
+    "xp": 0
+  },
+  "location": "lobby",
+  "inventory": [
+    "낡은 열쇠",
+    "회복 사탕"
+  ],
+  "flags": {
+    "met_sia": true,
+    "clock_fixed": false,
+    "rune_answered": false,
+    "boss_open": false
+  },
+  "affection": {
+    "sia": 0,
+    "harin": 0,
+    "mook": 0
+  },
+  "battle": null,
+  "journal": [
+    "비 오는 밤, 사라진 동생의 이름이 적힌 초대장을 따라 기록관에 들어왔다.",
+    "시아와 대화했다: 나이",
+    "시아와 대화했다: 안부"
+  ],
+  "turn": 4,
+  "world_items": {
+    "lobby": [
+      "성냥갑"
+    ],
+    "west_stacks": [
+      "청동 톱니"
+    ],
+    "clock_hall": [],
+    "garden": [
+      "달유리 조각"
+    ],
+    "mirror_archive": [],
+    "observatory": []
+  },
+  "defeated_enemies": []
+}
