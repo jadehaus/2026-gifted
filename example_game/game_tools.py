@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 from typing import Literal
 
 from .game_data import CHARACTERS, ENEMIES, LORE, MAP, PUZZLES
@@ -20,6 +22,31 @@ def _append_journal(state: dict, text: str) -> None:
         state["journal"].append(text)
 
 
+def _public_room(room: dict) -> dict:
+    return {
+        "name": room["name"],
+        "description": room["description"],
+        "exits": room.get("exits", {}),
+        "characters": room.get("characters", []),
+        "puzzle": room.get("puzzle"),
+    }
+
+
+def _public_character(character: dict) -> dict:
+    return {
+        "name": character["name"],
+        "role": character["role"],
+        "emoji": character.get("emoji", ""),
+        "accent": character.get("accent", ""),
+    }
+
+
+def _visible_puzzle(puzzle: dict | None) -> dict | None:
+    if not puzzle:
+        return None
+    return {"name": puzzle["name"], "description": puzzle["description"]}
+
+
 def _level_up_if_needed(state: dict) -> list[str]:
     logs = []
     player = state["player"]
@@ -33,15 +60,15 @@ def _level_up_if_needed(state: dict) -> list[str]:
 
 
 def inspect_area() -> dict:
-    """현재 위치, 출구, 캐릭터, 아이템, 퍼즐, 전투 상태를 확인한다. 장면 묘사 전 반드시 사용하기 좋다."""
+    """현재 위치에서 눈에 보이는 장소, 출구, 인물, 물건, 전투 상태만 확인한다."""
     state = load_state()
     room = _room(state)
     puzzle = PUZZLES.get(room.get("puzzle")) if room.get("puzzle") else None
     return {
         "state": public_state(state),
-        "room": room,
-        "visible_puzzle": puzzle,
-        "characters": {cid: CHARACTERS[cid] for cid in room.get("characters", [])},
+        "room": _public_room(room),
+        "visible_puzzle": _visible_puzzle(puzzle),
+        "characters": {cid: _public_character(CHARACTERS[cid]) for cid in room.get("characters", [])},
         "room_items": state.get("world_items", {}).get(state["location"], []),
     }
 
@@ -56,7 +83,11 @@ def move(direction: Direction) -> dict:
     """지도에서 북/남/동/서 방향으로 이동한다. 잠긴 진행 조건과 전투 상태를 검사한다."""
     state = load_state()
     if state.get("battle"):
-        return {"ok": False, "message": "전투 중에는 이동할 수 없다. battle_action을 먼저 사용해야 한다."}
+        return {
+            "ok": False,
+            "message": "적이 앞을 막고 있어 이동할 수 없다. 싸우거나 도망쳐야 한다.",
+            "state": public_state(state),
+        }
 
     room = _room(state)
     exits = room.get("exits", {})
@@ -75,7 +106,7 @@ def move(direction: Direction) -> dict:
     if enemy_id and state["flags"].get("rune_answered") and enemy_id not in state.get("defeated_enemies", []):
         enemy = ENEMIES[enemy_id]
         state["battle"] = {"enemy_id": enemy_id, "enemy_hp": enemy["hp"], "guarding": False}
-        _append_journal(state, f"{enemy['name']}와 전투가 시작되었다.")
+        _append_journal(state, f"{enemy['name']}가 나타났다.")
     elif target == "west_stacks" and "paper_moth" not in state.get("defeated_enemies", []):
         enemy = ENEMIES["paper_moth"]
         state["battle"] = {"enemy_id": "paper_moth", "enemy_hp": enemy["hp"], "guarding": False}
@@ -122,50 +153,172 @@ def use_item(item_name: str, target: str = "") -> dict:
     return {"ok": True, "message": f"{item_name}을 꺼내 보았다. 직접 효과는 없지만 단서로 쓸 수 있다.", "state": public_state(state)}
 
 
-def talk_to(character_id: CharacterId, line: str, topic: str = "", emotion: str = "") -> dict:
-    """현재 방의 캐릭터와 대화한다.
-    line: 그 캐릭터가 지금 플레이어에게 '직접' 할 1인칭 대사. 캐릭터의 성격과 말투를 살려서 네가 작성한다.
-          이 문장은 채팅에 캐릭터 본인의 말풍선으로 그대로 표시되므로, 따옴표 없이 대사 내용만 적는다.
-    topic: 대화 주제 키워드(예: '나이', '동생', '힌트', '약점'). 호감도/조건에 따라 정해진 단서가 열린다.
-    emotion: '조용히', '웃으며' 같은 짧은 어조(선택).
-    호감도나 조건이 충족되면 정해진 힌트/선물 대사가 line보다 우선해 표시될 수 있다."""
+def present_enemy_choice() -> dict:
+    """현재 적이 있을 때 프론트엔드에 적 출현 선택 UI를 띄우도록 요청한다."""
+    state = load_state()
+    public = public_state(state)
+    battle = public.get("battle")
+    if not battle:
+        return {"ok": False, "message": "지금은 눈앞에 적이 없다.", "state": public}
+
+    enemy_id = battle.get("enemy_id")
+    enemy = ENEMIES.get(enemy_id, {})
+    enemy_name = battle.get("enemy_name") or enemy.get("name") or enemy_id
+    return {
+        "ok": True,
+        "ui_event": {
+            "type": "enemy_choice",
+            "title": "적이 나타났다",
+            "enemy": {
+                "id": enemy_id,
+                "name": enemy_name,
+                "hp": battle.get("enemy_hp"),
+            },
+            "choices": [
+                {"label": "싸운다", "text": f"{enemy_name}을 공격한다"},
+                {"label": "도망친다", "text": "도망친다"},
+            ],
+        },
+        "state": public,
+    }
+
+
+def _clean_character_line(text: str) -> str:
+    text = re.sub(r"^[\s>*_`#-]+", "", str(text or "").strip())
+    text = re.sub(r"^[가-힣A-Za-z0-9_ -]{1,20}\s*[:：]\s*", "", text)
+    text = text.strip().strip("\"'“”‘’")
+    text = re.sub(r"\s+", " ", text)
+    return text[:260]
+
+
+def _topic_text(player_line: str, topic: str) -> str:
+    return f"{player_line} {topic}".strip()
+
+
+def _available_character_facts(character_id: str, player_line: str, topic: str, state: dict) -> list[str]:
+    text = _topic_text(player_line, topic)
+    affection = state["affection"].get(character_id, 0)
+    facts: list[str] = []
+    if character_id == "sia" and (affection >= 2 or any(word in text for word in ("문", "봉인", "힌트", "거울"))):
+        facts.append(CHARACTERS[character_id]["dialogue"]["hint"])
+    if character_id == "mook" and any(word in text for word in ("약점", "전투", "서기관", "적")):
+        facts.append(CHARACTERS[character_id]["dialogue"]["weakness"])
+    if affection >= 4 and "bond" in CHARACTERS[character_id]["dialogue"]:
+        facts.append(CHARACTERS[character_id]["dialogue"]["bond"])
+    return facts
+
+
+def _fallback_character_line(character_id: str, facts: list[str]) -> str:
+    if facts:
+        return facts[0]
+    return CHARACTERS[character_id]["dialogue"]["default"]
+
+
+def _character_reply(character_id: str, player_line: str, topic: str, state: dict) -> str:
+    character = CHARACTERS[character_id]
+    facts = _available_character_facts(character_id, player_line, topic, state)
+    history = state.setdefault("character_history", {}).setdefault(character_id, [])
+
+    if not os.getenv("OPENAI_API_KEY"):
+        return _fallback_character_line(character_id, facts)
+
+    fact_block = "\n".join(f"- {fact}" for fact in facts) if facts else "- 없음"
+    instructions = f"""
+너는 텍스트 RPG의 인물 '{character['name']}'이다.
+역할: {character['role']}
+성격: {character['personality']}
+
+규칙:
+- 오직 {character['name']} 본인의 1인칭 대사만 쓴다.
+- 플레이어가 방금 한 말이나 행동에만 반응한다.
+- 다음 목표, 선택지, 행동 추천, 공략을 말하지 않는다.
+- 모르는 정보나 아직 떠올리지 못한 비밀은 모른다고 답한다.
+- 사용 가능한 기억은 관련 있을 때만 자연스럽게 말한다.
+- 한국어 1~2문장, 따옴표와 이름표 없이 출력한다.
+
+사용 가능한 기억:
+{fact_block}
+""".strip()
+
+    input_messages = []
+    for item in history[-8:]:
+        role = "assistant" if item.get("role") == "character" else "user"
+        content = str(item.get("content", "")).strip()
+        if content:
+            input_messages.append({"role": role, "content": content[:400]})
+    input_messages.append({"role": "user", "content": player_line or topic or "말을 건다"})
+
+    try:
+        from openai import OpenAI
+
+        client = OpenAI()
+        response = client.responses.create(
+            model=os.getenv("OPENAI_CHARACTER_MODEL", os.getenv("OPENAI_TEXT_MODEL", "gpt-5.4")),
+            instructions=instructions,
+            input=input_messages,
+            max_output_tokens=180,
+        )
+        line = _clean_character_line(response.output_text)
+        return line or _fallback_character_line(character_id, facts)
+    except Exception:
+        return _fallback_character_line(character_id, facts)
+
+
+def _affection_delta(player_line: str) -> int:
+    text = player_line.strip()
+    positive = ("고마", "부탁", "괜찮", "미안", "걱정", "도와", "믿", "함께")
+    negative = ("꺼져", "닥쳐", "쓸모", "멍청", "거짓말", "협박")
+    if any(word in text for word in negative):
+        return -1
+    if any(word in text for word in positive):
+        return 1
+    return 0
+
+
+def talk_to(character_id: CharacterId, player_line: str = "", topic: str = "") -> dict:
+    """현재 방의 캐릭터에게 플레이어가 한 말이나 행동을 전달해 직접 대답하게 한다."""
     state = load_state()
     room = _room(state)
     if character_id not in room.get("characters", []):
         return {"ok": False, "message": "그 캐릭터는 현재 방에 없다.", "present": room.get("characters", [])}
 
     character = CHARACTERS[character_id]
-    affection = state["affection"].get(character_id, 0)
     reward = None
-    scripted = None  # 조건이 충족됐을 때만 열리는 정해진 단서 대사
-
-    if affection >= 4 and "bond" in character["dialogue"]:
-        scripted = character["dialogue"]["bond"]
-    elif character_id == "sia" and (affection >= 2 or "문" in topic or "힌트" in topic):
-        scripted = character["dialogue"]["hint"]
-    elif character_id == "harin" and affection >= 2 and "달빛 물약" not in state["inventory"]:
-        scripted = character["dialogue"]["gift"]
-        reward = "달빛 물약"
-        state["inventory"].append(reward)
-    elif character_id == "mook" and ("약점" in topic or "전투" in topic):
-        scripted = character["dialogue"]["weakness"]
 
     if character_id == "sia":
         state["flags"]["met_sia"] = True
 
-    # 말풍선에 띄울 대사: 조건이 열린 단서가 있으면 그것을, 없으면 GM이 지은 대사를 쓴다.
-    spoken = scripted or (line.strip() if line and line.strip() else character["dialogue"]["default"])
+    spoken = _character_reply(character_id, player_line, topic, state)
+
+    delta = _affection_delta(player_line)
+    old_affection = state["affection"].get(character_id, 0)
+    if delta:
+        state["affection"][character_id] = max(-3, min(5, old_affection + delta))
+
+    if (
+        character_id == "harin"
+        and state["affection"].get(character_id, 0) >= 2
+        and "달빛 물약" not in state["inventory"]
+        and any(word in _topic_text(player_line, topic) for word in ("도와", "물약", "회복", "아파", "다쳤"))
+    ):
+        reward = "달빛 물약"
+        state["inventory"].append(reward)
+
+    history = state.setdefault("character_history", {}).setdefault(character_id, [])
+    history.append({"role": "player", "content": player_line or topic or "말을 건다"})
+    history.append({"role": "character", "content": spoken})
+    del history[:-16]
 
     state["turn"] += 1
     _append_journal(state, f"{character['name']}와 대화했다: {topic or '안부'}")
     save_state(state)
     return {
         "ok": True,
-        "character": character,
-        "affection": affection,
+        "character": _public_character(character),
+        "affection": state["affection"].get(character_id, 0),
         "line": spoken,
-        "emotion": emotion.strip(),
-        "scripted": bool(scripted),
+        "emotion": "",
+        "affection_delta": delta,
         "reward": reward,
         "state": public_state(state),
     }
@@ -315,7 +468,7 @@ def examine(target: str) -> dict:
             return {
                 "ok": True,
                 "target": character["name"],
-                "lore": f"{character['role']}. {character['personality']} {character['context']}",
+                "lore": f"{character['role']}. {character['personality']}",
             }
 
     return {"ok": False, "message": f"'{target}'에서 특별히 눈에 띄는 단서는 없다.", "room": room["description"]}
@@ -336,11 +489,9 @@ TOOLS = [
     move,
     take_item,
     use_item,
+    present_enemy_choice,
     talk_to,
-    say,
-    change_affection,
     solve_puzzle,
     battle_action,
     examine,
-    add_journal,
 ]

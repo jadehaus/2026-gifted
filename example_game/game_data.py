@@ -10,6 +10,7 @@ START_STATE = {
     "affection": {"sia": 0, "harin": 0, "mook": 0},
     "battle": None,
     "journal": ["비 오는 밤, 사라진 동생의 이름이 적힌 초대장을 따라 기록관에 들어왔다."],
+    "character_history": {"sia": [], "harin": [], "mook": []},
     "turn": 0,
 }
 
@@ -167,4 +168,3 @@ ENEMIES = {
         "loot": ["동생의 마지막 기록"],
     },
 }
-

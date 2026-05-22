@@ -18,6 +18,7 @@ const TOOL_INFO = {
   move: { icon: "🚶", label: "이동한다" },
   take_item: { icon: "🎒", label: "아이템을 줍는다" },
   use_item: { icon: "✨", label: "아이템을 사용한다" },
+  present_enemy_choice: { icon: "⚠️", label: "적 출현 선택지를 띄운다" },
   talk_to: { icon: "💬", label: "대화한다" },
   say: { icon: "🗣️", label: "캐릭터가 말한다" },
   change_affection: { icon: "💗", label: "마음이 움직인다" },
@@ -159,6 +160,45 @@ function addToolNotice(calls) {
   scrollMessages();
 }
 
+function renderEnemyChoices(calls) {
+  (calls || []).forEach((call) => {
+    if (call.name !== "present_enemy_choice") return;
+    const event = call.result?.ui_event;
+    if (!event || event.type !== "enemy_choice") return;
+
+    const enemy = event.enemy || {};
+    const panel = document.createElement("article");
+    panel.className = "enemy-encounter";
+    panel.innerHTML = `
+      <div class="enemy-flare" aria-hidden="true"></div>
+      <div class="enemy-copy">
+        <p>${escapeHtml(event.title || "적이 나타났다")}</p>
+        <h3>${escapeHtml(enemy.name || "알 수 없는 적")}</h3>
+        <div class="enemy-meta">
+          <span>HP ${escapeHtml(enemy.hp ?? "-")}</span>
+          <span>행동 선택 필요</span>
+        </div>
+      </div>
+      <div class="enemy-actions"></div>`;
+
+    const actions = panel.querySelector(".enemy-actions");
+    (event.choices || []).forEach((choice) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = choice.label?.includes("도망") ? "enemy-action secondary" : "enemy-action";
+      button.textContent = choice.label || choice.text || "행동";
+      button.addEventListener("click", () => {
+        if (busy) return;
+        sendText(choice.text || choice.label);
+      });
+      actions.appendChild(button);
+    });
+
+    messagesEl.appendChild(panel);
+    scrollMessages();
+  });
+}
+
 function chip(text, tone = "") {
   const el = document.createElement("span");
   el.className = `chip ${tone}`;
@@ -197,28 +237,7 @@ function renderPresent(characters) {
 }
 
 function renderQuickActions(area) {
-  const room = area.room || {};
-  const actions = [];
-  actions.push({ label: "🔍 주변 살피기", text: "주변을 자세히 살펴본다" });
-  Object.values(area.characters || {}).forEach((c) => {
-    actions.push({ label: `💬 ${c.name}와 대화`, text: `${c.name}에게 말을 건다` });
-  });
-  Object.keys(room.exits || {}).forEach((dir) => {
-    actions.push({ label: `🚶 ${dir}쪽`, text: `${dir}쪽으로 간다` });
-  });
-
   quickActionsEl.innerHTML = "";
-  actions.slice(0, 6).forEach((a) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "quick-btn";
-    btn.textContent = a.label;
-    btn.addEventListener("click", () => {
-      if (busy) return;
-      sendText(a.text);
-    });
-    quickActionsEl.appendChild(btn);
-  });
 }
 
 function renderState(area) {
@@ -265,13 +284,52 @@ function renderState(area) {
 
   const battle = document.querySelector("#battle");
   if (state.battle) {
-    const enemyName = state.battle.enemy_id;
-    battle.innerHTML = `<strong>⚔️ ${enemyName}</strong><span>적 HP ${state.battle.enemy_hp}</span>`;
+    const enemyName = state.battle.enemy_name || state.battle.enemy_id;
+    battle.innerHTML = `
+      <strong>⚔️ ${escapeHtml(enemyName)}</strong>
+      <span>HP ${escapeHtml(state.battle.enemy_hp ?? "-")}</span>
+      <span class="battle-choice">선택 대기</span>`;
     battle.classList.add("active");
   } else {
-    battle.textContent = "현재 전투 없음";
+    battle.textContent = "주변에 적 없음";
     battle.classList.remove("active");
   }
+}
+
+function renderCharacterHistory(data) {
+  const box = document.querySelector("#character-history");
+  box.innerHTML = "";
+  Object.values(data || {}).forEach((entry) => {
+    const character = entry.character || {};
+    const messages = entry.messages || [];
+    const details = document.createElement("details");
+    details.className = "history-card";
+    details.style.setProperty("--char-accent", character.accent || "#d8f3ff");
+    details.open = messages.length > 0;
+
+    const rows = messages.length
+      ? messages
+          .map((message) => {
+            const isCharacter = message.role === "character";
+            const speaker = isCharacter ? character.name : "방문자";
+            return `
+              <li class="${isCharacter ? "character-line" : "player-line"}">
+                <strong>${escapeHtml(speaker)}</strong>
+                <span>${escapeHtml(message.content || "")}</span>
+              </li>`;
+          })
+          .join("")
+      : `<li class="empty-line">아직 대화 기록이 없습니다.</li>`;
+
+    details.innerHTML = `
+      <summary>
+        <span>${escapeHtml(character.emoji || "💬")}</span>
+        <strong>${escapeHtml(character.name || "-")}</strong>
+        <small>${messages.length}개</small>
+      </summary>
+      <ol class="conversation-list">${rows}</ol>`;
+    box.appendChild(details);
+  });
 }
 
 function renderToolCalls(calls) {
@@ -317,9 +375,15 @@ function addToolResultNote(text) {
 }
 
 async function loadState() {
-  const response = await fetch("/api/state");
-  const area = await response.json();
+  const [stateResponse, historyResponse] = await Promise.all([
+    fetch("/api/state"),
+    fetch("/api/characters/history"),
+  ]);
+  const area = await stateResponse.json();
   renderState(area);
+  if (historyResponse.ok) {
+    renderCharacterHistory(await historyResponse.json());
+  }
 }
 
 async function loadTools() {
@@ -359,6 +423,7 @@ async function sendText(text) {
     const calls = data.tool_calls || [];
     addToolNotice(calls);
     renderCharacterTurns(calls);
+    renderEnemyChoices(calls);
 
     const answer = String(data.answer || data.error || "").trim();
     if (answer) {
@@ -390,7 +455,7 @@ resetButton.addEventListener("click", async () => {
   await loadState();
   addMessage(
     "assistant",
-    "**새 기록 개방**\n\n비 오는 밤, 당신은 _은빛 로비_에 서 있습니다. 멈춘 별자리 시계 아래에서 젖은 책 냄새가 올라옵니다.\n\n- 시아에게 말을 건다\n- 북쪽 서가로 간다\n- 주변을 살핀다"
+    "**새 기록 개방**\n\n비 오는 밤, 당신은 _은빛 로비_에 서 있습니다. 멈춘 별자리 시계 아래에서 젖은 책 냄새가 올라옵니다."
   );
 });
 
@@ -398,7 +463,7 @@ Promise.all([loadHealth(), loadTools(), loadState()]).then(() => {
   renderToolCalls([]);
   addMessage(
     "assistant",
-    "**달빛 기록관 입장**\n\n비 오는 밤, 사라진 동생의 이름이 적힌 초대장이 당신을 이곳으로 이끌었습니다. 채팅에 행동을 말하면, 게임 마스터가 tool을 호출해 실제 진행 데이터를 움직입니다.\n\n_예: 시아에게 동생의 이름을 묻는다 / 성냥갑을 줍는다 / 북쪽으로 간다_"
+    "**달빛 기록관 입장**\n\n비 오는 밤, 사라진 동생의 이름이 적힌 초대장이 당신을 이곳으로 이끌었습니다. 채팅에 행동을 입력하면 기록관은 그 행동의 결과만 돌려줍니다."
   );
   input.focus();
 });

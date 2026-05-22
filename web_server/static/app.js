@@ -94,7 +94,7 @@ function enhanceCodeCopies(container) {
 
 function scrollToBottom() {
   window.requestAnimationFrame(() => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: "smooth" });
   });
 }
 

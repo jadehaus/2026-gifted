@@ -12,7 +12,7 @@
     "회복 사탕"
   ],
   "flags": {
-    "met_sia": true,
+    "met_sia": false,
     "clock_fixed": false,
     "rune_answered": false,
     "boss_open": false
@@ -24,11 +24,14 @@
   },
   "battle": null,
   "journal": [
-    "비 오는 밤, 사라진 동생의 이름이 적힌 초대장을 따라 기록관에 들어왔다.",
-    "시아와 대화했다: 나이",
-    "시아와 대화했다: 안부"
+    "비 오는 밤, 사라진 동생의 이름이 적힌 초대장을 따라 기록관에 들어왔다."
   ],
-  "turn": 4,
+  "character_history": {
+    "sia": [],
+    "harin": [],
+    "mook": []
+  },
+  "turn": 0,
   "world_items": {
     "lobby": [
       "성냥갑"

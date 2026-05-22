@@ -24,7 +24,7 @@
         </header>
 
         <section class="panel-block objective-block">
-          <div class="panel-title">현재 목표</div>
+          <div class="panel-title">현재 상태</div>
           <p id="objective" class="objective">-</p>
         </section>
 
@@ -78,9 +78,9 @@
         <header class="chat-header">
           <div>
             <p>기록관 채팅 콘솔</p>
-            <h2>말하면 세계가 움직입니다</h2>
+            <h2>입력한 행동만 처리합니다</h2>
           </div>
-          <span class="gm-badge">LLM 게임 마스터</span>
+          <span class="gm-badge">환경 관찰 LLM</span>
         </header>
         <div id="messages" class="messages"></div>
         <form id="chat-form" class="composer">
@@ -89,7 +89,7 @@
             <input
               id="user-input"
               autocomplete="off"
-              placeholder="예: 시아에게 동생의 이름을 물어본다 / 북쪽으로 간다 / 성냥갑을 줍는다"
+              placeholder="행동을 입력한다"
             />
             <button id="send-button" type="submit">전송</button>
           </div>
@@ -103,8 +103,13 @@
         </section>
 
         <section class="panel-block battle-box">
-          <div class="panel-title">전투</div>
-          <div id="battle">현재 전투 없음</div>
+          <div class="panel-title">적</div>
+          <div id="battle">주변에 적 없음</div>
+        </section>
+
+        <section class="panel-block">
+          <div class="panel-title">대화 기록</div>
+          <div id="character-history" class="character-history"></div>
         </section>
 
         <section class="panel-block">

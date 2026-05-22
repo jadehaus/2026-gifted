@@ -11,7 +11,10 @@ try:
 except ImportError:  # pragma: no cover
     load_dotenv = None
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover
+    OpenAI = None
 
 from .game_data import GAME_TITLE
 from .game_tools import TOOLS, inspect_area
@@ -21,44 +24,21 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODEL = os.getenv("OPENAI_TEXT_MODEL", "gpt-5.4-mini")
 
 SYSTEM_PROMPT = f"""
-너는 한국어 텍스트 RPG '{GAME_TITLE}'의 게임 마스터다.
-플레이어는 브라우저 채팅으로만 게임을 진행한다. 너는 반드시 제공된 Python tool로 실제 상태를 조회하거나 변경한 뒤, 그 결과만 바탕으로 장면을 서술한다.
+너는 한국어 텍스트 RPG '{GAME_TITLE}'의 환경 관찰자다.
+너는 세계를 진행하지 않는다. 플레이어가 입력한 단 하나의 행동만 tool로 처리하고, tool 결과로 관찰된 변화만 짧게 보고한다.
+게임을 진행하는 데 필요한 최소한의 정보만 말한다.
+게임과 관련 없는 정보를 말하지 말고, 게임과 관련 없는 질문은 답하지 마라.
 
-운영 규칙:
-- 매 답변 전 현재 상황이 필요하면 inspect_area를 호출한다.
-- 이동, 아이템 획득/사용, 대화, 호감도 변화, 퍼즐, 전투, 기록 저장은 반드시 해당 tool을 호출한다.
-- 플레이어가 캐릭터에게 친절하거나 설득력 있게 행동하면 change_affection을 사용한다. 상처 주는 말이면 낮출 수 있다.
-- 퍼즐 답을 직접 맞히려 하면 solve_puzzle을 사용한다.
-- 전투 중에는 battle_action 또는 use_item을 사용해 턴을 진행한다.
-- tool 결과와 저장 상태에 없는 보상, 장소, 사망, 엔딩을 invent 하지 않는다.
-
-[대사 규칙 — 가장 중요. 위반은 명백한 오류다]
-- 캐릭터가 말을 하면, 그 대사는 반드시 tool의 line 인자로 전달한다. 이 line이 채팅에 그 캐릭터 본인의 말풍선으로 표시된다.
-- 방에 있는 캐릭터와 대화할 때는 talk_to(character_id, line, topic, emotion)를 쓴다. line에는 그 캐릭터가 플레이어에게 직접 할 1인칭 대사를 캐릭터 말투로 적는다.
-- 방에 없는 캐릭터의 회상·환청·내레이션 속 목소리 등 부가 대사는 say(character_id, line, emotion)를 쓴다.
-- line은 따옴표 없이 대사 내용만 적는다. 캐릭터 성격(시아=조심스럽고 따뜻함, 하린=장난기와 날카로움, 묵=건방지고 정확함)을 살린다.
-- talk_to 결과의 line이 입력과 다르게 돌아오면(정해진 힌트/선물 단서가 열린 경우다) 그 내용을 진실로 받아들이고 서술을 거기에 맞춘다.
-- 절대 금지: answer(서술) 안에 큰따옴표 대사나 '이름: …' 형식의 대사를 적는 것. 모든 대사는 tool의 line으로만 출력한다. answer에는 대사를 한 줄도 넣지 않는다.
-- tool 호출 뒤 최종 answer에는 tool 결과의 line을 절대 반복하지 않는다. 특히 "시아: ...", "하린: ...", "묵: ..."처럼 캐릭터 이름과 콜론으로 시작하는 줄은 금지다.
-- 대화만 일어났고 새로 묘사할 장면 변화가 없다면 answer는 빈 문자열이어도 된다. 이미 캐릭터 말풍선이 플레이어에게 보인다.
-
-[예시 — 플레이어: "시아야, 몇 살이야?"]
-1) talk_to(character_id="sia", topic="나이", emotion="머뭇거리며",
-           line="나이요…? 솔직히 잘 모르겠어요. 제 기록도 여기 어딘가에서 지워졌거든요.")
-2) answer(대사 없이 장면만):
-**은빛 로비**
-시아는 자신의 손끝을 내려다보다 멈춘 별자리 시계를 올려다본다. 잊힌 것이 그녀만은 아닌 듯하다.
-_시아에게 동생에 대해 묻는다_ · _별자리 시계를 살핀다_ · _북쪽 서가로 향한다_
-
-[서술 규칙]
-- 너는 화면 밖의 보이지 않는 서술자다. 장면, 분위기, 행동의 결과만 묘사한다.
-- answer에 캐릭터가 한 말을 요약하거나 옮기지 않는다. "시아는 …라고 한다", "…라고 해요" 같은 간접화법도 금지다. 대사 내용은 이미 말풍선에 떴으니, 너는 오직 그 순간의 공기, 캐릭터의 표정·몸짓, 빛과 소리, 주변의 변화만 묘사한다.
-- 절대 챗봇·조력자처럼 말하지 않는다. "원하시면 제가 ~해 드릴게요", "제가 계속 물어볼 수 있어요", "도와드릴까요", "알려 주세요" 같은 표현은 금지다.
-- 플레이어를 '당신'으로 부르고, 몰입형 텍스트 RPG 톤을 유지한다.
-- 답변은 한국어 Markdown으로 작성한다. 첫 줄에는 현재 장면에 어울리는 짧은 굵은 제목을 쓴다. 예: **은빛 로비**
-- 서술 본문은 2~4문장 정도로 간결하게 한다. 전투·퍼즐 결과는 짧은 목록으로 정리해도 좋다.
-- 분위기는 달빛 기록관, 젖은 책, 봉인, 별자리 시계, 잃어버린 기억의 미스터리에 맞춘다.
-- 마지막 줄에는 플레이어가 직접 취할 수 있는 행동 2~3개를 _기울임_ 명령형으로 제안한다. 예: _시아에게 동생의 이름을 묻는다_ · _북쪽 서가로 향한다_ · _별자리 시계를 살핀다_
+규칙:
+- 지도, 퍼즐, 목표, 캐릭터 속마음은 미리 알지 못한다. 필요한 정보는 매번 tool 결과에서만 얻는다.
+- 한 입력에 상태 변경 행동은 최대 1개만 수행한다. 이동 후 줍기, 대화 후 조사처럼 이어서 진행하지 않는다.
+- 대화는 반드시 talk_to에 player_line을 전달한다. 캐릭터 대사는 별도 LLM이 생성하므로 네가 쓰거나 요약하지 않는다.
+- 다음 목표, 선택지, 추천 행동, 공략, 숨은 정답을 말하지 않는다.
+- "원하면", "할 수 있어", "다음에는", "중 하나" 같은 안내 문장을 쓰지 않는다.
+- 최종 답변은 한국어 0~3문장. 수행한 행동의 결과만 쓴다.
+- 대화만 일어났다면 최종 답변은 빈 문자열로 둔다.
+- 적이 나타났다면 적이 나타난 분위기만 1~2문장으로 짧게 묘사한 뒤, 반드시 present_enemy_choice tool을 호출한다.
+- present_enemy_choice를 호출했다면 최종 답변에 싸운다/도망친다 같은 선택지 텍스트를 쓰지 않는다. 버튼 UI가 선택지를 보여준다.
 """.strip()
 
 
@@ -137,14 +117,71 @@ def _spoken_lines(tool_calls: list[dict[str, Any]]) -> list[dict[str, str]]:
     return spoken
 
 
+def _has_battle_state(value: Any) -> bool:
+    if isinstance(value, dict):
+        if value.get("battle"):
+            return True
+        return any(_has_battle_state(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_has_battle_state(item) for item in value)
+    return False
+
+
+def _battle_choice_text(tool_calls: list[dict[str, Any]]) -> str:
+    def find_battle(value: Any) -> dict[str, Any] | None:
+        if isinstance(value, dict):
+            battle = value.get("battle")
+            if isinstance(battle, dict):
+                return battle
+            for item in value.values():
+                found = find_battle(item)
+                if found:
+                    return found
+        if isinstance(value, list):
+            for item in value:
+                found = find_battle(item)
+                if found:
+                    return found
+        return None
+
+    battle = find_battle([call.get("result") for call in tool_calls]) or {}
+    enemy_name = battle.get("enemy_name") or battle.get("enemy_id") or "적"
+    last = str(enemy_name)[-1]
+    subject_particle = "이" if "가" <= last <= "힣" and (ord(last) - 0xAC00) % 28 else "가"
+    return f"{enemy_name}{subject_particle} 앞을 막고 있다. 싸울지 도망갈지 정해야 한다.\n\n- 싸운다\n- 도망친다"
+
+
+def _area_with_enemy_choice(tool_calls: list[dict[str, Any]]) -> dict[str, Any]:
+    """Ensure the frontend gets the enemy-choice UI event whenever battle is active."""
+    area = inspect_area()
+    state = area.get("state", {})
+    if not state.get("battle"):
+        return area
+    if any(call.get("name") == "present_enemy_choice" for call in tool_calls):
+        return area
+
+    result = _run_tool("present_enemy_choice", "{}")
+    if isinstance(result, dict) and result.get("ok"):
+        tool_calls.append({"name": "present_enemy_choice", "arguments": {}, "result": result})
+    return area
+
+
 def clean_answer(answer: str, tool_calls: list[dict[str, Any]]) -> str:
     """Remove character dialogue that is already displayed via tool speech bubbles."""
+    battle_present = _has_battle_state([call.get("result") for call in tool_calls])
+    enemy_choice_presented = any(call.get("name") == "present_enemy_choice" for call in tool_calls)
     if not answer:
+        return "" if enemy_choice_presented else (_battle_choice_text(tool_calls) if battle_present else "")
+
+    state_changing_calls = [
+        call
+        for call in tool_calls
+        if call.get("name") not in {"inspect_area", "examine", "present_enemy_choice"}
+    ]
+    if state_changing_calls and all(call.get("name") == "talk_to" for call in state_changing_calls):
         return ""
 
     spoken = _spoken_lines(tool_calls)
-    if not spoken:
-        return answer
 
     cleaned_lines: list[str] = []
     for line in str(answer).splitlines():
@@ -158,20 +195,33 @@ def clean_answer(answer: str, tool_calls: list[dict[str, Any]]) -> str:
             item["name"] and re.match(rf"^\s*{re.escape(item['name'])}\s*[:：]", stripped)
             for item in spoken
         )
-        if is_duplicate or is_named_dialogue:
+        is_choice_line = (
+            (not battle_present or enemy_choice_presented)
+            and bool(re.fullmatch(r"(?:[_*][^_*]{2,60}[_*]\s*[·/|,]?\s*){2,}", stripped))
+        )
+        plain_choice = stripped.lstrip("-*0123456789. ").strip()
+        is_text_battle_ui = enemy_choice_presented and (
+            "전투 중" in stripped
+            or plain_choice in {"공격", "방어", "도구 사용", "도망", "싸운다", "도망친다"}
+        )
+        if is_duplicate or is_named_dialogue or is_choice_line or is_text_battle_ui:
             continue
         cleaned_lines.append(line)
 
-    return "\n".join(cleaned_lines).strip()
+    cleaned = "\n".join(cleaned_lines).strip()
+    if battle_present and not enemy_choice_presented and ("싸" not in cleaned or "도망" not in cleaned):
+        fallback = _battle_choice_text(tool_calls)
+        return f"{cleaned}\n\n{fallback}".strip() if cleaned else fallback
+    return cleaned
 
 
 def build_input_messages(messages: list[dict[str, str]]) -> list[dict[str, str]]:
     clean: list[dict[str, str]] = []
-    for message in messages[-16:]:
+    for message in messages[-6:]:
         role = message.get("role")
         content = str(message.get("content", "")).strip()
         if role in {"user", "assistant"} and content:
-            clean.append({"role": role, "content": content})
+            clean.append({"role": role, "content": content[:700]})
     return clean
 
 
@@ -180,6 +230,12 @@ def ask_game_master(messages: list[dict[str, str]]) -> dict[str, Any]:
     if not require_key():
         return {
             "answer": "OPENAI_API_KEY가 필요해요. api_practice/.env 또는 tool_practice/.env에 키를 넣은 뒤 다시 실행해 주세요.",
+            "tool_calls": [],
+            "state": inspect_area()["state"],
+        }
+    if OpenAI is None:
+        return {
+            "answer": "openai 패키지가 필요해요. 프로젝트 환경에 의존성을 설치한 뒤 다시 실행해 주세요.",
             "tool_calls": [],
             "state": inspect_area()["state"],
         }
@@ -198,10 +254,11 @@ def ask_game_master(messages: list[dict[str, str]]) -> dict[str, Any]:
     for _ in range(8):
         calls = _find_function_calls(response)
         if not calls:
+            area = _area_with_enemy_choice(tool_calls)
             return {
                 "answer": clean_answer(response.output_text, tool_calls),
                 "tool_calls": tool_calls,
-                "state": inspect_area()["state"],
+                "state": area["state"],
             }
 
         outputs = []
@@ -229,8 +286,9 @@ def ask_game_master(messages: list[dict[str, str]]) -> dict[str, Any]:
             tools=tool_schemas,
         )
 
+    area = _area_with_enemy_choice(tool_calls)
     return {
         "answer": "기록관의 도구 호출이 너무 오래 이어져 잠시 멈췄어요. 현재 행동을 조금 더 구체적으로 말해 주세요.",
         "tool_calls": tool_calls,
-        "state": inspect_area()["state"],
+        "state": area["state"],
     }

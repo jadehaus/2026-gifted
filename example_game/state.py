@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .game_data import MAP, START_STATE
+from .game_data import CHARACTERS, ENEMIES, MAP, START_STATE
 
 GAME_DIR = Path(__file__).resolve().parent
 SAVE_PATH = GAME_DIR / "saves" / "progress.json"
@@ -27,6 +27,9 @@ def load_state() -> dict[str, Any]:
         state = json.loads(SAVE_PATH.read_text(encoding="utf-8"))
         state.setdefault("world_items", {room_id: list(room.get("items", [])) for room_id, room in MAP.items()})
         state.setdefault("defeated_enemies", [])
+        history = state.setdefault("character_history", {})
+        for character_id in ("sia", "harin", "mook"):
+            history.setdefault(character_id, [])
         return state
     except json.JSONDecodeError:
         state = new_state()
@@ -48,18 +51,40 @@ def reset_state() -> dict[str, Any]:
 
 
 def current_objective(state: dict[str, Any]) -> str:
-    flags = state.get("flags", {})
     if "forgotten_scribe" in state.get("defeated_enemies", []):
-        return "동생의 마지막 기록을 되찾았다. 기록관을 빠져나가자."
+        return "마지막 기록 회수"
     if state.get("battle"):
-        return "지금은 전투 중. 공격·방어·도구로 적을 물리치자."
-    if flags.get("boss_open"):
-        return "관측소로 올라가 망각 서기관과 마주하자. 빛에 약한 적이다."
-    if flags.get("clock_fixed"):
-        return "거울 기록실의 봉인문 수수께끼('세 글자')를 풀자."
-    if flags.get("met_sia"):
-        return "별자리 시계를 고치자. 청동 톱니를 찾아 '새벽 3시'에 맞춰야 한다."
-    return "은빛 로비에서 시아에게 말을 걸고 단서를 모으자."
+        return "적 출현"
+    return "탐색 중"
+
+
+def public_battle(state: dict[str, Any]) -> dict[str, Any] | None:
+    battle = state.get("battle")
+    if not battle:
+        return None
+    enemy = ENEMIES.get(battle.get("enemy_id"), {})
+    return {
+        "enemy_id": battle.get("enemy_id"),
+        "enemy_name": enemy.get("name", battle.get("enemy_id")),
+        "enemy_hp": battle.get("enemy_hp"),
+        "guarding": battle.get("guarding", False),
+    }
+
+
+def public_character_history(state: dict[str, Any]) -> dict[str, Any]:
+    history = state.get("character_history", {})
+    result: dict[str, Any] = {}
+    for character_id, character in CHARACTERS.items():
+        result[character_id] = {
+            "character": {
+                "name": character["name"],
+                "role": character["role"],
+                "emoji": character.get("emoji", ""),
+                "accent": character.get("accent", ""),
+            },
+            "messages": history.get(character_id, [])[-20:],
+        }
+    return result
 
 
 def public_state(state: dict[str, Any]) -> dict[str, Any]:
@@ -67,9 +92,8 @@ def public_state(state: dict[str, Any]) -> dict[str, Any]:
         "player": state["player"],
         "location": state["location"],
         "inventory": state["inventory"],
-        "flags": state["flags"],
         "affection": state["affection"],
-        "battle": state["battle"],
+        "battle": public_battle(state),
         "defeated_enemies": state.get("defeated_enemies", []),
         "journal": state["journal"][-8:],
         "turn": state["turn"],
