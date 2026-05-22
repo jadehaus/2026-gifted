@@ -8,6 +8,7 @@ from typing import Any
 from flask import Flask, jsonify, render_template, request
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WEB_SERVER_DIR = Path(__file__).resolve().parent
 TOOL_PRACTICE_DIR = PROJECT_ROOT / "tool_practice"
 
 if str(TOOL_PRACTICE_DIR) not in sys.path:
@@ -18,11 +19,11 @@ from util import build_tool_schemas, load_env, pretty_json, require_openai_key  
 
 
 app = Flask(__name__)
-TOOL_FILE = "my_tools.py"
+TOOL_FILE = "tools.py"
 
 
-def load_my_tools() -> list[Any]:
-    path = TOOL_PRACTICE_DIR / TOOL_FILE
+def load_app_tools() -> list[Any]:
+    path = WEB_SERVER_DIR / TOOL_FILE
     module_name = f"web_server_tools_{path.stem}_{path.stat().st_mtime_ns}"
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
@@ -39,7 +40,7 @@ def load_my_tools() -> list[Any]:
 
 
 def get_tool_payload() -> dict[str, Any]:
-    tools = load_my_tools()
+    tools = load_app_tools()
     schemas = build_tool_schemas(tools)
     return {
         "selected": TOOL_FILE,
@@ -95,7 +96,7 @@ def select_tool_file():
     filename = str(payload.get("filename", "")).strip()
 
     if filename not in {"", TOOL_FILE}:
-        return jsonify({"error": "web_server는 my_tools.py만 사용할 수 있습니다."}), 400
+        return jsonify({"error": "web_server는 tools.py만 사용할 수 있습니다."}), 400
 
     try:
         return jsonify(get_tool_payload())
@@ -117,7 +118,7 @@ def chat():
         return jsonify({"answer": "메시지를 입력해 주세요.", "tool_calls": []})
 
     try:
-        selected_tools = load_my_tools()
+        selected_tools = load_app_tools()
         result = ask_llm_with_tools(clean_messages, selected_tools)
         return jsonify(result)
     except Exception as exc:

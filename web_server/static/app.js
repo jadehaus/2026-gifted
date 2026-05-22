@@ -160,7 +160,7 @@ function closeToolPopover() {
 }
 
 function updateToolUi(data) {
-  toolLabel.textContent = data.selected || "my_tools.py";
+  toolLabel.textContent = data.selected || "tools.py";
   toolCountEl.textContent = `${(data.schemas || []).length} tools`;
   toolSchemaEl.textContent = data.pretty || "[]";
 }
@@ -174,7 +174,7 @@ async function loadHealth() {
 async function loadToolFiles() {
   const response = await fetch("/api/tool-files");
   const data = await response.json();
-  toolLabel.textContent = data.selected || "my_tools.py";
+  toolLabel.textContent = data.selected || "tools.py";
 }
 
 async function loadTools() {
